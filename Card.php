@@ -1,8 +1,5 @@
 <?php
 
-
-declare(strict_types=1);
-
 class Card 
 {
     private int $id;
@@ -10,7 +7,6 @@ class Card
     private bool $isFlipped;
     private bool $isMatched;
     private int $pairId;
-    
     
     public function __construct(int $id, string $imagePath, int $pairId)
     {
@@ -24,14 +20,13 @@ class Card
     
     private function sanitizeImagePath(string $imagePath): string
     {
-        
-        $cleanPath = filter_var($imagePath, FILTER_SANITIZE_STRING);
+        $cleanPath = trim($imagePath);
+        $cleanPath = preg_replace('/[^a-zA-Z0-9\-_.]/', '', $cleanPath);
         
         if (empty($cleanPath)) {
             throw new InvalidArgumentException("Le chemin de l'image ne peut pas être vide");
         }
         
-       
         if (!preg_match('/\.svg$/i', $cleanPath)) {
             throw new InvalidArgumentException("Seuls les fichiers SVG sont autorisés");
         }
@@ -39,18 +34,16 @@ class Card
         return $cleanPath;
     }
     
-    
     public function flip(): bool
     {
         if ($this->isMatched) {
-            return false; 
+            return false;
         }
         
         $this->isFlipped = !$this->isFlipped;
         return true;
     }
     
-   
     public function hide(): void
     {
         if (!$this->isMatched) {
@@ -58,20 +51,17 @@ class Card
         }
     }
     
-    
     public function setMatched(): void
     {
         $this->isMatched = true;
-        $this->isFlipped = true; 
+        $this->isFlipped = true;
     }
     
-  
     public function isPairWith(Card $otherCard): bool
     {
         return $this->pairId === $otherCard->getPairId() && $this->id !== $otherCard->getId();
     }
     
-   
     public function renderHtml(): string
     {
         $cssClasses = ['card'];
@@ -104,7 +94,6 @@ class Card
         return $html;
     }
     
-   
     public function toArray(): array
     {
         return [
@@ -116,7 +105,6 @@ class Card
         ];
     }
     
-  
     public static function fromArray(array $data): Card
     {
         $card = new self($data['id'], $data['imagePath'], $data['pairId']);
@@ -127,7 +115,8 @@ class Card
     }
     
 
-    // Getters
+    // getters
+
     public function getId(): int
     {
         return $this->id;
@@ -153,13 +142,9 @@ class Card
         return $this->isMatched;
     }
     
-   
-    public function isClickable(): bool
-    {
-        return !$this->isFlipped && !$this->isMatched;
-    }
 
-     // Setters
+    // Setters
+
     public function setId(int $id): void
     {
         $this->id = $id;
@@ -181,5 +166,19 @@ class Card
             $this->isFlipped = $isFlipped;
         }
     }
-  
+    
+    public function isClickable(): bool
+    {
+        return !$this->isFlipped && !$this->isMatched;
+    }
+    
+    public function __toString(): string
+    {
+        $status = [];
+        if ($this->isFlipped) $status[] = 'retournée';
+        if ($this->isMatched) $status[] = 'trouvée';
+        if (empty($status)) $status[] = 'cachée';
+        
+        return "Carte #{$this->id} (paire {$this->pairId}) : " . implode(', ', $status);
+    }
 }
