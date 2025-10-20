@@ -245,16 +245,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
     <link rel="stylesheet" href="assets/css/memoryStyle.css">
 </head>
 <body>
-    <nav id="nav-bar">
+ <nav id="nav-bar">
     <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
         <a href="index.php">Accueil</a>
         <a href="leaderboard.php">Classement</a>
-        <a href="profil.php">Mon profil</a>
+        <a href="dueliste.php">Ton profil  </a>
         <a href="deconnection.php">Déconnexion</a>
     <?php else: ?>
         <a href="index.php">Accueil</a>
         <a href="leaderboard.php">Classement</a>
-        <a href="inscription.php">Connexion/Inscription</a>
+        <a href="inscription-connextion.php">S'inscrire/se connecter</a>
     <?php endif; ?>
 </nav>
 

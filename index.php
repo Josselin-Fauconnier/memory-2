@@ -4,6 +4,7 @@
 require_once 'Card.php';
 require_once 'Game.php';
 require_once 'User.php';
+require_once 'GameDao.php';
 require_once 'config/session.php';
 
 // Variables pour messages et état
@@ -50,8 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Vérifier si le jeu est terminé
                     if (isset($result['gameCompleted']) && $result['gameCompleted']) {
-                        $message = "🏆 Félicitations ! Partie terminée en " . $game->getMovesCount() . " coups. Score: " . $game->getScore();
-                    }
+   
+                    $gameDAO = new GameDAO();
+                    $gameDAO->saveGame($game);
+    
+                $message = " Félicitations ! Partie terminée en " . $game->getMovesCount() . " coups. Score: " . $game->getScore();
+                }
                 } else {
                     $error = "Aucune partie en cours.";
                 }
@@ -95,7 +100,7 @@ if (isset($_SESSION['current_game'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Game Yu-Gi-Oh! Edition</title>
+    <title>Memory Game version  Yu-Gi-Oh! </title>
     <link rel="stylesheet" href="assets/css/memoryStyle.css">
 </head>
 <body>
@@ -103,12 +108,12 @@ if (isset($_SESSION['current_game'])) {
     <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
         <a href="index.php">Accueil</a>
         <a href="leaderboard.php">Classement</a>
-        <a href="profil.php">Mon profil</a>
+        <a href="dueliste.php"> Ton profil </a>
         <a href="deconnection.php">Déconnexion</a>
     <?php else: ?>
         <a href="index.php">Accueil</a>
         <a href="leaderboard.php">Classement</a>
-        <a href="inscription.php">Connexion</a>
+        <a href="inscription-connextion.php">S'inscrire/se connecter</a>
     <?php endif; ?>
 </nav>
     <div class="container">
@@ -145,7 +150,7 @@ if (isset($_SESSION['current_game'])) {
                             <option value="12">12 paires (24 cartes)</option>
                         </select>
                     </div>
-                    <button type="submit">🚀 Commencer le duel</button>
+                    <button type="submit"> Commencer le duel</button>
                 </form>
             </div>
         <?php else: ?>
@@ -179,22 +184,19 @@ if (isset($_SESSION['current_game'])) {
                 <div class="actions">
                     <form method="POST" style="display: inline;">
                         <input type="hidden" name="action" value="reset">
-                        <button type="submit">🔄 Nouvelle partie</button>
+                        <button type="submit"> Nouvelle partie</button>
                     </form>
                     
                     <?php if ($gameState['status'] === 'playing'): ?>
                         <form method="POST" style="display: inline;">
                             <input type="hidden" name="action" value="abandon">
-                            <button type="submit" class="btn-danger">❌ Abandonner</button>
+                            <button type="submit" class="btn-danger"> Abandonner</button>
                         </form>
                     <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
 
-        <div style="text-align: center; margin-top: 30px; color: #666;">
-            <p>🎮 Utilisant vos classes Card.php, Game.php et User.php</p>
-        </div>
     </div>
 </body>
 </html>
