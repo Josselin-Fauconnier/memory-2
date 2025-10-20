@@ -1,184 +1,227 @@
 <?php
 
-class Card 
-{
+class Card {
     private int $id;
-    private string $imagePath;
-    private bool $isFlipped;
-    private bool $isMatched;
-    private int $pairId;
+    private string $image;
+
+    private static array $availableImages = [
+        'DinomorphiaAlert.webp',
+        'DinomorphiaBrute.webp',
+        'DinomorphiaDiplos.webp',
+        'DinomorphiaDomain.webp',
+        'DinomorphiaFrenzy.webp',
+        'DinomorphiaIntact.webp',
+        'DinomorphiaKentregina.webp',
+        'DinomorphiaReversion.webp',
+        'DinomorphiaRexterm.webp',
+        'DinomorphiaShell.webp',
+        'DinomorphiaSonic.webp',
+        'DinomorphiaStealthbergia.webp'
+    ];
     
-    public function __construct(int $id, string $imagePath, int $pairId)
-    {
+
+    private bool $isFlipped = false;
+    private bool $isMatched = false;
+
+    public function __construct( int $id, string $image){
+        if($id < 0){
+            throw new InvalidArgumentException("l'id doit être un entier positif");
+        }
+
         $this->id = $id;
-        $this->imagePath = $this->sanitizeImagePath($imagePath);
-        $this->pairId = $pairId;
+        $this->image = $this->validateImage($image);
         $this->isFlipped = false;
         $this->isMatched = false;
     }
-    
-    
-    private function sanitizeImagePath(string $imagePath): string
-    {
-        $cleanPath = trim($imagePath);
-        $cleanPath = preg_replace('/[^a-zA-Z0-9\-_.]/', '', $cleanPath);
+
+    private function validateImage(string $image) : string{
+         $cleanImage = preg_replace('/[^a-zA-Z0-9._-]/', '', $image);
         
-        if (empty($cleanPath)) {
-            throw new InvalidArgumentException("Le chemin de l'image ne peut pas être vide");
+        if (in_array($cleanImage, self::$availableImages)) {
+            return $cleanImage;
         }
         
-        if (!preg_match('/\.svg$/i', $cleanPath)) {
-            throw new InvalidArgumentException("Seuls les fichiers SVG sont autorisés");
-        }
-        
-        return $cleanPath;
+        error_log("Image non autorisée tentée: '{$image}'. Images autorisées: " . implode(', ', self::$availableImages));
+        return self::$availableImages[0]; 
     }
-    
-    public function flip(): bool
-    {
-        if ($this->isMatched) {
+
+    public function flip() : bool {
+        if($this->isMatched){
             return false;
         }
-        
         $this->isFlipped = !$this->isFlipped;
         return true;
     }
-    
-    public function hide(): void
-    {
-        if (!$this->isMatched) {
-            $this->isFlipped = false;
-        }
-    }
-    
-    public function setMatched(): void
-    {
+
+    public function match() : void {
         $this->isMatched = true;
         $this->isFlipped = true;
     }
-    
-    public function isPairWith(Card $otherCard): bool
-    {
-        return $this->pairId === $otherCard->getPairId() && $this->id !== $otherCard->getId();
-    }
-    
-    public function renderHtml(): string
-    {
-        $cssClasses = ['card'];
-        
-        if ($this->isFlipped && !$this->isMatched) {
-            $cssClasses[] = 'flipped';
-        }
-        
-        if ($this->isMatched) {
-            $cssClasses[] = 'matched';
-        }
-        
-        if (!$this->isFlipped && !$this->isMatched) {
-            $cssClasses[] = 'clickable';
-        }
-        
-        $classAttribute = implode(' ', $cssClasses);
-        $disabled = ($this->isFlipped || $this->isMatched) ? 'disabled' : '';
-        
-        $html = '<button class="card-button" data-card-id="' . $this->id . '" ' . $disabled . '>';
-        $html .= '<div class="' . $classAttribute . '">';
-        
-        if ($this->isFlipped || $this->isMatched) {
-            $html .= '<img src="images/' . htmlspecialchars($this->imagePath, ENT_QUOTES, 'UTF-8') . '" alt="Carte ' . $this->pairId . '">';
-        }
-        
-        $html .= '</div>';
-        $html .= '</button>';
-        
-        return $html;
-    }
-    
-    public function toArray(): array
-    {
-        return [
-            'id' => $this->id,
-            'imagePath' => $this->imagePath,
-            'pairId' => $this->pairId,
-            'isFlipped' => $this->isFlipped,
-            'isMatched' => $this->isMatched
-        ];
-    }
-    
-    public static function fromArray(array $data): Card
-    {
-        $card = new self($data['id'], $data['imagePath'], $data['pairId']);
-        $card->isFlipped = $data['isFlipped'];
-        $card->isMatched = $data['isMatched'];
-        
-        return $card;
-    }
-    
 
-    // getters
+    public function hide() : bool {
+        if($this->isMatched){
+            return false;
+        }
+        $this->isFlipped = false;
+        return true;
+    }
 
-    public function getId(): int
-    {
+    //getters
+
+    public function getId() : int {
         return $this->id;
     }
-    
-    public function getImagePath(): string
-    {
-        return $this->imagePath;
+
+    public function getImage() : string {
+        return $this->image;
     }
-    
-    public function getPairId(): int
-    {
-        return $this->pairId;
-    }
-    
-    public function isFlipped(): bool
-    {
+
+    public function isFlipped() : bool {
         return $this->isFlipped;
     }
-    
-    public function isMatched(): bool
-    {
+
+    public function isMatched() : bool {
         return $this->isMatched;
     }
-    
 
-    // Setters
+    public function getImagePath() : string {
+        return "assets/images/" . $this->image;
+    }
+    
+    public function matches(Card $otherCard) : bool {
+        return $this->image === $otherCard->getImage();
+    }
 
-    public function setId(int $id): void
+     public function canBeFlipped(): bool 
     {
-        $this->id = $id;
+        return !$this->isMatched && !$this->isFlipped;
     }
-    
-    public function setImagePath(string $imagePath): void
+
+
+    // Pour HTLM/CSS
+
+  public function renderHtml(): string 
     {
-        $this->imagePath = $this->sanitizeImagePath($imagePath);
+        $cssClass = $this->getCssClasses();
+        $imageSrc = $this->getDisplayImage();
+        $clickable = $this->canBeFlipped() ? '' : 'disabled';
+        
+        return sprintf(
+            '<div class="card %s" data-card-id="%d" %s>
+                <img src="%s" alt="Carte %d" />
+            </div>',
+            $cssClass,
+            $this->id,
+            $clickable,
+            $imageSrc,
+            $this->id
+        );
     }
-    
-    public function setPairId(int $pairId): void
-    {
-        $this->pairId = $pairId;
+
+    private function getCssClasses() : string {
+        $classes = [];
+
+        if($this->isFlipped){
+            $classes[] = 'flipped';
+        }
+
+        if($this->isMatched){
+            $classes[] = 'matched';
+        }
+
+        if($this->canBeFlipped()){
+            $classes[] = 'clickable';
+        }
+
+        return implode('', $classes);
     }
-    
-    public function setFlipped(bool $isFlipped): void
-    {
-        if (!$this->isMatched) {
-            $this->isFlipped = $isFlipped;
+
+    private function getDisplayImage() : string {
+        if($this->isFlipped || $this->isMatched){
+            return $this->getImagePath();
+        }else{
+            return "assets/images/Dos.webp";
         }
     }
-    
-    public function isClickable(): bool
+
+
+
+      public function renderClickableForm(): string 
     {
-        return !$this->isFlipped && !$this->isMatched;
+        if (!$this->canBeFlipped()) {
+            return $this->renderHtml(); 
+        }
+        
+        return sprintf(
+            '<form method="POST" action="index.php" style="display:inline;">
+                <input type="hidden" name="action" value="flip_card">
+                <input type="hidden" name="card_id" value="%d">
+                <button type="submit" class="card-button">
+                    %s
+                </button>
+            </form>',
+            $this->id,
+            $this->renderHtml()
+        );
     }
     
-    public function __toString(): string
+
+
+    // gestion Array
+    public function toArray() : array {
+        return [
+            'id' => $this->id,
+            'image' => $this->image,
+            'isFlipped' => $this->isFlipped,
+            'isMatched' => $this->isMatched,
+        ];
+    }
+
+    public static function fromArray(array $data) : Card {
+        if(isset($data['id']) && !isset($data['image'])){
+            throw new InvalidArgumentException("donnés invalides pour la restituion des cartes");
+        }
+
+        $card = new self($data['id'],$data['image']);
+        $card->isFlipped = $data['isFlipped'] ?? false;
+        $card->isMatched = $data['isMatched'] ?? false;
+
+        return $card;
+    }
+
+
+    // gestion des images 
+
+    public static function getAvailableImages() : array {
+        return self::$availableImages;
+    }
+
+    public static function getRandomImage(): string 
     {
-        $status = [];
-        if ($this->isFlipped) $status[] = 'retournée';
-        if ($this->isMatched) $status[] = 'trouvée';
-        if (empty($status)) $status[] = 'cachée';
+        $randomIndex = random_int(0, count(self::$availableImages) - 1);
+        return self::$availableImages[$randomIndex];
+    }
+
+    public static function getImagesForGame(int $count): array 
+    {
+        if ($count > count(self::$availableImages)) {
+            throw new InvalidArgumentException(
+                "Pas assez d'images disponibles. Demandé: {$count}, Disponible: " . count(self::$availableImages)
+            );
+        }
         
-        return "Carte #{$this->id} (paire {$this->pairId}) : " . implode(', ', $status);
+        return array_slice(self::$availableImages, 0, $count);
+    }
+
+     public static function addImage(string $imageName): bool 
+    {
+        $cleanName = preg_replace('/[^a-zA-Z0-9._-]/', '', $imageName);
+        
+        if (!empty($cleanName) && !in_array($cleanName, self::$availableImages)) {
+            self::$availableImages[] = $cleanName;
+            return true;
+        }
+        
+        return false;
     }
 }
